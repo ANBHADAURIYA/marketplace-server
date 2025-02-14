@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { Op } from 'sequelize';
 import Item from '../models/items';
 import { verifyToken } from '../middleware/auth';
 import { asyncMiddleware } from '../utils/asyncMiddleware';
@@ -6,9 +7,38 @@ import asyncHandler from '../utils/asyncHandler';
 
 const router = Router();
 
-// Get all items
+// Get all items with search, filter, and sort functionality
 router.get('/', asyncMiddleware(async (req: Request, res: Response) => {
-    const items = await Item.findAll();
+    const { search, minPrice, maxPrice, sortBy, order } = req.query;
+
+    const where: any = {};
+
+    if (search) {
+        where[Op.or] = [
+            { name: { [Op.like]: `%${search}%` } },
+            { description: { [Op.like]: `%${search}%` } }
+        ];
+    }
+
+    if (minPrice) {
+        where.price = { ...where.price, [Op.gte]: Number(minPrice) };
+    }
+
+    if (maxPrice) {
+        where.price = { ...where.price, [Op.lte]: Number(maxPrice) };
+    }
+
+    const orderArray: any[] = [];
+    if (sortBy) {
+        orderArray.push([sortBy, order === 'desc' ? 'DESC' : 'ASC']);
+    }
+
+    const items = await Item.findAll({
+        where,
+        order: orderArray.length ? orderArray : [['createdAt', 'DESC']],
+        attributes: ['id', 'name', 'description', 'price', 'image', 'userId', 'createdAt'] // Include createdAt attribute
+    });
+
     res.json(items);
 }));
 
@@ -19,13 +49,18 @@ router.get('/user', asyncHandler(verifyToken), asyncHandler(async (req: Request,
     if (!userId) {
         return res.status(401).json({ msg: 'User not authenticated' });
     }
-    const items = await Item.findAll({ where: { userId } });
+    const items = await Item.findAll({
+        where: { userId },
+        attributes: ['id', 'name', 'description', 'price', 'image', 'userId', 'createdAt'] // Include createdAt attribute
+    });
     res.json(items);
 }));
 
 // Get a single item by ID
 router.get('/:id', asyncMiddleware(async (req: Request, res: Response) => {
-    const item = await Item.findByPk(req.params.id);
+    const item = await Item.findByPk(req.params.id, {
+        attributes: ['id', 'name', 'description', 'price', 'image', 'userId', 'createdAt'] // Include createdAt attribute
+    });
     if (item) {
         res.json(item);
     } else {

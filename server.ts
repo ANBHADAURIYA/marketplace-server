@@ -1,7 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
-import sequelize from './database';
+import sequelize from './config/database';
 import itemsRouter from './routes/items';
 import transactionsRouter from './routes/transaction';
 

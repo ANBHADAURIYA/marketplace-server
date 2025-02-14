@@ -1,6 +1,6 @@
 
 import { DataTypes, Model, Optional } from 'sequelize';
-import sequelize from '../database';
+import sequelize from '../config/database';
 
 interface TransactionAttributes {
     id: number;
