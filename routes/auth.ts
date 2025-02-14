@@ -22,12 +22,11 @@ router.post('/register', asyncHandler(async (req: Request, res: Response): Promi
     const payload = { user: { id: user.id } };
     const token = jwt.sign(payload, 'your_jwt_secret', { expiresIn: 3600 });
 
-    return res.status(201).json({ token });
+    return res.status(201).json({ token, userId: user.id });
 }));
 
 router.post('/login', asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { username, password } = req.body;
-
 
     const user = await User.findOne({ where: { username } });
     if (!user) {
@@ -42,7 +41,7 @@ router.post('/login', asyncHandler(async (req: Request, res: Response): Promise<
     const payload = { user: { id: user.id } };
     const token = jwt.sign(payload, 'your_jwt_secret', { expiresIn: 3600 });
 
-    return res.status(200).json({ token });
+    return res.status(200).json({ token, userId: user.id });
 }));
 
 export default router;
